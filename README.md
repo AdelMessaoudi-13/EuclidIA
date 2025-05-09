@@ -57,7 +57,8 @@ The test suite includes:
 - Ambiguous or trick questions
 - Automated scoring (0–10) for clarity, correctness, and policy respect
 
-📈 Latest results: [See CSV output](https://github.com/AdelMessaoudi-13/EuclidIA/blob/results/euclidia_test_results.csv)
+📊 Latest daily test result:  
+→ Go to [Actions](https://github.com/AdelMessaoudi-13/EuclidIA/actions) → click latest run → download CSV artifact
 
 ---
 

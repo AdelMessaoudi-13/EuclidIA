@@ -5,6 +5,7 @@ from config import llms_config
 from agent_logic import prompt_ai
 from langchain_core.messages import HumanMessage, SystemMessage
 from mistralai import Mistral
+from datetime import datetime
 
 # --- Load Mistral API key from environment ---
 api_key = os.environ.get("MISTRAL_API_KEY")
@@ -120,7 +121,8 @@ def run_test_suite():
             })
 
     df = pd.DataFrame(results)
-    df.to_csv("euclidia_test_results.csv", index=False)
+    filename = f"euclidia_test_results_{datetime.now().strftime('%Y-%m-%d')}.csv"
+    df.to_csv(filename, index=False)
     avg = total_score / len(questions)
     print(f"\n📄 Results saved to euclidia_test_results.csv")
     print(f"📊 Average score: {avg:.2f}/10")
