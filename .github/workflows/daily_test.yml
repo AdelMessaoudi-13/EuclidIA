@@ -29,22 +29,30 @@ jobs:
         with:
           name: euclidia-test-results
           path: euclidia_test_results.csv
+          
       - name: Commit CSV to `results` branch
         if: success()
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          # Save the results file to a temporary location
+          # Save the results file temporarily
           mkdir -p /tmp/test_results
           cp euclidia_test_results.csv /tmp/test_results/
 
+          # Remove it from working tree to avoid conflicts
+          rm euclidia_test_results.csv
+
           # Checkout the results branch
           git fetch origin results
-          git checkout results || git checkout -b results
+          git checkout results
+          git pull origin results
 
-          # Copy the results file back and commit
+          # Restore the file and commit
           cp /tmp/test_results/euclidia_test_results.csv ./
           git add euclidia_test_results.csv
           git commit -m "Update test results CSV for $(date +%Y-%m-%d)"
+
+          # Configure push with GitHub token
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
           git push origin results
