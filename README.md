@@ -1,5 +1,7 @@
 # 📐 EuclidIA  - *Think. Explain. Prove.*
 
+![Daily EuclidIA Test](https://github.com/AdelMessaoudi-13/EuclidIA/actions/workflows/daily_test.yml/badge.svg)
+
 **EuclidIA** is an AI-powered chatbot specialized in mathematics.  
 It answers your questions by explaining clearly or reasoning precisely — just like a real mathematician.
 
@@ -45,6 +47,21 @@ Then go to `http://localhost:8501`.
 
 ---
 
+## Daily Testing
+
+Every day, EuclidIA is automatically tested using GitHub Actions.
+
+The test suite includes:
+- Valid math questions
+- Invalid or off-topic questions
+- Ambiguous or trick questions
+- Automated scoring (0–10) for clarity, correctness, and policy respect
+
+Results are saved as a CSV file:  
+See latest test results: https://github.com/AdelMessaoudi-13/EuclidIA/actions
+
+---
+
 ## 🛠 Technologies Used
 
 | Type         | Component             | Role                                               |
@@ -65,8 +82,11 @@ euclidia/
 ├── config.py         ← API keys & model setup
 ├── tools.py          ← LangChain tools
 ├── agent_logic.py    ← Agent orchestration logic
+├── test_euclidia.py  ← Test script (run daily)
 ├── requirements.txt
 ├── .env              ← Your API keys
+├──.github/workflows/  
+    └── daily_test.yml  ← GitHub Actions workflow
 └── README.md
 ```
 
