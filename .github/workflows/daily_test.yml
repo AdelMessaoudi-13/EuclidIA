@@ -29,7 +29,7 @@ jobs:
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
-          python tests/test_euclidia.py
+          python test_euclidia.py
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
