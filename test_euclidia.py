@@ -1,7 +1,6 @@
 import time
 import os
 import pandas as pd
-from config import llms_config
 from agent_logic import prompt_ai
 from langchain_core.messages import HumanMessage, SystemMessage
 from mistralai import Mistral
@@ -10,9 +9,9 @@ from datetime import datetime
 # --- Load Mistral API key from environment ---
 api_key = os.environ.get("MISTRAL_API_KEY")
 if not api_key:
-    raise ValueError("La variable d'environnement MISTRAL_API_KEY n'est pas définie.")
+    raise ValueError("Environment variable MISTRAL_API_KEY is not defined.")
 
-# Mise à jour: utilisation de Mistral au lieu de MistralClient
+# Update: using Mistral instead of MistralClient
 client = Mistral(api_key=api_key)
 
 # --- Generate 10 diverse test questions using Mistral Medium ---
@@ -27,7 +26,7 @@ Generate 10 test questions for evaluating a math assistant:
 
 Return a numbered list only.
 """
-    # Mise à jour: utilisation de la syntaxe correcte pour la v1.7.0
+    # Update: correct syntax for v1.7.0
     response = client.chat.complete(
         model="mistral-medium",
         messages=[{"role": "user", "content": prompt}]
@@ -55,7 +54,7 @@ Provide:
 Score: X/10
 Comment: <your evaluation>
 """
-    # Mise à jour: utilisation de la syntaxe correcte pour la v1.7.0
+    # Update: correct syntax for v1.7.0
     response = client.chat.complete(
         model="mistral-medium",
         messages=[{"role": "user", "content": prompt}]
@@ -68,15 +67,15 @@ Comment: <your evaluation>
     return score, comment
 
 # --- System message (copied exactly from your code) ---
-system_msg = SystemMessage(content="""# 🎯 Role
+system_msg = SystemMessage(content="""# Role
 You are an AI assistant specialized in mathematics. You must answer only questions related to mathematics.
 
-# 🛠️ Available Tools
+# Available Tools
 You have access to two tools to answer questions:
 - `use_gemini`: for definitions, clear explanations of mathematical concepts, established properties, formulas, or any factual response.
 - `use_deepseek`: for proofs, formal demonstrations, detailed reasoning, or problem solving that requires multiple logical steps.
 
-# 🧭 Guidelines
+# Guidelines
 Carefully analyze each question and choose the most appropriate tool:
 - If the question is straightforward, factual, or asks for a simple explanation → use `use_gemini`.
 - If the question requires structured reasoning, rigorous justification, or a demonstration → use `use_deepseek`.
@@ -90,6 +89,7 @@ def run_test_suite():
     questions = generate_test_questions()
     results = []
     total_score = 0
+    threshold_score = 7  # ✅ Minimum required average score
 
     for idx, question in enumerate(questions, 1):
         print(f"\n🔹 Q{idx}: {question}")
@@ -120,13 +120,26 @@ def run_test_suite():
                 "Comment": str(e)
             })
 
+    avg = total_score / len(questions)
+
+    # Add average score to the CSV file
+    results.append({
+        "Question": "[Average]",
+        "Answer": "",
+        "Score": avg,
+        "Comment": "Average score over all questions"
+    })
+
     df = pd.DataFrame(results)
     filename = f"euclidia_test_results_{datetime.now().strftime('%Y-%m-%d')}.csv"
     df.to_csv(filename, index=False)
-    avg = total_score / len(questions)
     print(f"\n📄 Results saved to euclidia_test_results.csv")
     print(f"📊 Average score: {avg:.2f}/10")
     print("✅ EuclidIA test completed.\n")
+
+    # Raise error if average score is too low
+    if avg < threshold_score:
+        raise RuntimeError(f"❌ Test FAILED — average score {avg:.2f}/10 is below the threshold ({threshold_score}/10)")
 
 if __name__ == "__main__":
     run_test_suite()
