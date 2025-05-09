@@ -36,3 +36,15 @@ jobs:
         with:
           name: euclidia-test-results
           path: euclidia_test_results.csv
+      - name: Commit CSV to `results` branch
+        if: success()
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin results
+          git checkout results
+          cp euclidia_test_results.csv euclidia_test_results.csv
+          git add euclidia_test_results.csv
+          git commit -m "Daily update of test results"
+          git push origin results
+
