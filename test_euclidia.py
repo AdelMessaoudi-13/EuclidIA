@@ -126,7 +126,7 @@ def run_test_suite():
 
     # Add average score to the CSV file
     results.append({
-        "Question": "[Average]",
+        "Question": "Average",
         "Answer": "",
         "Score": avg,
         "Comment": "Average score over all questions"
