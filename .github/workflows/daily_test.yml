@@ -32,7 +32,7 @@ jobs:
           python test_euclidia.py
 
       - name: Upload test results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: euclidia-test-results
           path: euclidia_test_results.csv
