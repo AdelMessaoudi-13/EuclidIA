@@ -1,28 +1,22 @@
 name: Daily EuclidIA Test
-
 on:
   schedule:
     - cron: '30 15 * * *'  # 15:30 UTC = 17:30 Paris
   workflow_dispatch:
-
 jobs:
   run-tests:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
-
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-
       - name: Run EuclidIA test suite
         env:
           MISTRAL_API_KEY: ${{ secrets.MISTRAL_API_KEY }}
@@ -30,25 +24,27 @@ jobs:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
         run: |
           python test_euclidia.py
-
       - name: Upload test results
         uses: actions/upload-artifact@v4
         with:
           name: euclidia-test-results
           path: euclidia_test_results.csv
-
       - name: Commit CSV to `results` branch
         if: success()
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
 
-          cp euclidia_test_results.csv temp_results.csv
+          # Save the results file to a temporary location
+          mkdir -p /tmp/test_results
+          cp euclidia_test_results.csv /tmp/test_results/
 
+          # Checkout the results branch
           git fetch origin results
-          git checkout results
-          
-          mv temp_results.csv euclidia_test_results.csv
+          git checkout results || git checkout -b results
+
+          # Copy the results file back and commit
+          cp /tmp/test_results/euclidia_test_results.csv ./
           git add euclidia_test_results.csv
-          git commit -m "Update test results CSV"
+          git commit -m "Update test results CSV for $(date +%Y-%m-%d)"
           git push origin results
