@@ -32,8 +32,10 @@ Return a numbered list only.
         messages=[{"role": "user", "content": prompt}]
     )
     lines = response.choices[0].message.content.strip().split("\n")
-    return [line.lstrip("0123456789. ").strip() for line in lines if line.strip()]
+    questions = [line.lstrip("0123456789. ").strip() for line in lines if line.strip()]
 
+    # Ensure only 10 questions are returned
+    return questions[:10]
 # --- Evaluate assistant's answer using Mistral Medium ---
 def evaluate_response(question, answer):
     prompt = f"""

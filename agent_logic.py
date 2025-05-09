@@ -20,7 +20,7 @@ def prompt_ai(messages, nested_calls=0):
     try:
         ai_response = agent.invoke(recent_messages)
     except Exception as e:
-        st.error(f"🚨 Agent error: {e}")
+        st.error(f"❌ Agent error: {e}")
         #return HumanMessage(content="⚠️ An error occurred while processing your request.")
         from langchain_core.messages import AIMessage
         return AIMessage(content="❌ An error occurred during processing.")
