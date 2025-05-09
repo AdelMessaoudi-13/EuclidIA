@@ -52,10 +52,12 @@ Then go to `http://localhost:8501`.
 Every day, EuclidIA is automatically tested using GitHub Actions.
 
 The test suite includes:
-- Valid math questions
+- Valid mathematics questions
 - Invalid or off-topic questions
 - Ambiguous or trick questions
-- Automated scoring (0–10) for clarity, correctness, and policy respect
+- Automated scoring (0–10) based on clarity, correctness, and policy compliance
+- The test fails automatically if the average score is below a fixed threshold
+- Exactly 10 test questions are evaluated per run
 
 📊 Latest daily test result:  
 → Go to [Actions](https://github.com/AdelMessaoudi-13/EuclidIA/actions) → click latest run → download CSV artifact
