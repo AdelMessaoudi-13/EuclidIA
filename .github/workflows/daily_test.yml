@@ -2,7 +2,7 @@ name: Daily EuclidIA Test
 
 on:
   schedule:
-    - cron: '45 14 * * *' 
+    - cron: '30 15 * * *'  # 15:30 UTC = 17:30 Paris
   workflow_dispatch:
 
 jobs:
