@@ -32,19 +32,20 @@ jobs:
           python test_euclidia.py
 
       - name: Upload test results
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v3
         with:
           name: euclidia-test-results
           path: euclidia_test_results.csv
+
       - name: Commit CSV to `results` branch
         if: success()
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           git fetch origin results
+          rm -f euclidia_test_results.csv
           git checkout results
-          cp euclidia_test_results.csv euclidia_test_results.csv
+          git checkout main -- euclidia_test_results.csv
           git add euclidia_test_results.csv
-          git commit -m "Daily update of test results"
+          git commit -m "Update test results CSV"
           git push origin results
-
