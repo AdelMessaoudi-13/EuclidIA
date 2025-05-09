@@ -42,10 +42,13 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
+          cp euclidia_test_results.csv temp_results.csv
+
           git fetch origin results
-          rm -f euclidia_test_results.csv
           git checkout results
-          git checkout main -- euclidia_test_results.csv
+          
+          mv temp_results.csv euclidia_test_results.csv
           git add euclidia_test_results.csv
           git commit -m "Update test results CSV"
           git push origin results
