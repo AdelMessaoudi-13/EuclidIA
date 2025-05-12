@@ -1,6 +1,14 @@
-# 📐 EuclidIA  - *Think. Explain. Prove.*
+<p align="center">
+  <img src="assets/euclidia_logo.png" alt="EuclidIA Logo" width="220"/>
+</p>
 
-![Daily EuclidIA Test](https://github.com/AdelMessaoudi-13/EuclidIA/actions/workflows/daily_test.yml/badge.svg)
+<p align="center"><em>Think. Explain. Prove.</em></p>
+
+<p align="center">
+  <img src="https://github.com/AdelMessaoudi-13/EuclidIA/actions/workflows/daily_test.yml/badge.svg" alt="Daily EuclidIA Test"/>
+</p>
+
+---
 
 **EuclidIA** is an AI-powered chatbot specialized in mathematics.  
 It answers your questions by explaining clearly or reasoning precisely — just like a real mathematician.
@@ -96,7 +104,7 @@ euclidia/
 
 ## 🤝 Contribute
 
-Want to improve or extend EuclidIA?  
+Want to improve or extend EuclidIA ?  
 Open an issue or a pull request — your contributions are welcome!
 
 ---
