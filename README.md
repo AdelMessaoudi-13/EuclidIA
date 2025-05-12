@@ -1,8 +1,7 @@
 <p align="center">
-  <img src="assets/euclidia_logo.png" alt="EuclidIA Logo" width="220"/>
+  <img src="assets/euclidia_logo.png" alt="EuclidIA Logo" width="220"><br>
+  <em>Think. Explain. Prove.</em>
 </p>
-
-<p align="center"><em>Think. Explain. Prove.</em></p>
 
 <p align="center">
   <img src="https://github.com/AdelMessaoudi-13/EuclidIA/actions/workflows/daily_test.yml/badge.svg" alt="Daily EuclidIA Test"/>
