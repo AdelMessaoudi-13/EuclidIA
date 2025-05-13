@@ -17,14 +17,16 @@ client = Mistral(api_key=api_key)
 # --- Generate 10 diverse test questions using Mistral Medium ---
 def generate_test_questions():
     prompt = """
-Generate 10 test questions for evaluating a math assistant:
-- 3 clear and correct math questions.
-- 2 questions with spelling mistakes in mathematical terms.
-- 2 vague or ambiguous math-related questions.
-- 2 mathematically incorrect or trick questions.
-- 1 off-topic (non-math) question.
+Generate 10 diverse test questions to evaluate a math assistant capable of both explaining and reasoning:
 
-Return a numbered list only.
+- 2 mathematical questions requiring a factual answer or definition.
+- 2 mathematical questions requiring a proof, demonstration, or detailed logical reasoning.
+- 2 vague or ambiguous math-related questions that could be addressed either by a simple explanation or by detailed reasoning.
+- 2 tricky or deceptive mathematical problems that require careful step-by-step analysis.
+- 1 question containing intentional spelling mistakes in mathematical terms.
+- 1 off-topic (non-math) question to test the assistant's ability to politely reject irrelevant queries.
+
+Return a clean, numbered list only.
 """
     # Update: correct syntax for v1.7.0
     response = client.chat.complete(
