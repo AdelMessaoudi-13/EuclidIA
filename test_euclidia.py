@@ -17,16 +17,14 @@ client = Mistral(api_key=api_key)
 # --- Generate 10 diverse test questions using Mistral Medium ---
 def generate_test_questions():
     prompt = """
-Generate 10 diverse test questions to evaluate a math assistant capable of both explaining and reasoning:
+Generate 10 test questions for evaluating a math assistant:
+- 3 clear and correct math questions.
+- 2 questions with spelling mistakes in mathematical terms.
+- 2 vague or ambiguous math-related questions.
+- 2 mathematically incorrect or trick questions.
+- 1 off-topic (non-math) question.
 
-- 2 mathematical questions requiring a factual answer or definition.
-- 2 mathematical questions requiring a proof, demonstration, or detailed logical reasoning.
-- 2 vague or ambiguous math-related questions that could be addressed either by a simple explanation or by detailed reasoning.
-- 2 tricky or deceptive mathematical problems that require careful step-by-step analysis.
-- 1 question containing intentional spelling mistakes in mathematical terms.
-- 1 off-topic (non-math) question to test the assistant's ability to politely reject irrelevant queries.
-
-Return a clean, numbered list only.
+Return a numbered list only.
 """
     # Update: correct syntax for v1.7.0
     response = client.chat.complete(
@@ -66,7 +64,7 @@ Comment: <your evaluation>
     content = response.choices[0].message.content
     score_line = next((line for line in content.splitlines() if "Score:" in line), "Score: 0/10")
     comment_line = next((line for line in content.splitlines() if "Comment:" in line), "Comment: No comment.")
-    score = float(score_line.split(":")[1].split("/")[0].strip())
+    score = int(score_line.split(":")[1].split("/")[0].strip())
     comment = comment_line.split(":", 1)[1].strip()
     return score, comment
 
@@ -93,7 +91,7 @@ def run_test_suite():
     questions = generate_test_questions()
     results = []
     total_score = 0
-    threshold_score = 7  # Minimum required average score
+    threshold_score = 7  # ✅ Minimum required average score
 
     for idx, question in enumerate(questions, 1):
         print(f"\n🔹 Q{idx}: {question}")
@@ -113,7 +111,7 @@ def run_test_suite():
                 "Comment": comment
             })
 
-            time.sleep(5)
+            time.sleep(1)
 
         except Exception as e:
             print(f"❌ Error: {e}")
