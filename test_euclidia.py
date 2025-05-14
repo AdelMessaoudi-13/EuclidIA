@@ -66,7 +66,7 @@ Comment: <your evaluation>
     content = response.choices[0].message.content
     score_line = next((line for line in content.splitlines() if "Score:" in line), "Score: 0/10")
     comment_line = next((line for line in content.splitlines() if "Comment:" in line), "Comment: No comment.")
-    score = int(score_line.split(":")[1].split("/")[0].strip())
+    score = score_line.split(":")[1].split("/")[0].strip()
     comment = comment_line.split(":", 1)[1].strip()
     return score, comment
 
