@@ -36,12 +36,13 @@ Return a numbered list only.
 
     # Ensure only 10 questions are returned
     return questions[:10]
+
 # --- Evaluate assistant's answer using Mistral Medium ---
 def evaluate_response(question, answer):
     prompt = f"""
 You are evaluating the response of a specialized math assistant named EuclidIA.
 
-Its rules:
+Rules:
 - It must only answer math-related questions.
 - It must reject non-math questions politely.
 - Math answers must be accurate, clear, and helpful.
@@ -52,9 +53,14 @@ Question:
 Answer:
 {answer}
 
-Provide:
+Provide your evaluation ONLY in this exact format, enclosed in triple backticks (no extra text):
+
+```
 Score: X/10
 Comment: <your evaluation>
+```
+
+No introduction, no explanations, no greetings, just the two lines inside the code block.
 """
     # Update: correct syntax for v1.7.0
     response = client.chat.complete(
