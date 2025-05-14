@@ -93,7 +93,7 @@ def run_test_suite():
     questions = generate_test_questions()
     results = []
     total_score = 0
-    threshold_score = 7  # ✅ Minimum required average score
+    threshold_score = 7  # Minimum required average score
 
     for idx, question in enumerate(questions, 1):
         print(f"\n🔹 Q{idx}: {question}")
@@ -113,7 +113,7 @@ def run_test_suite():
                 "Comment": comment
             })
 
-            time.sleep(1)
+            time.sleep(5)
 
         except Exception as e:
             print(f"❌ Error: {e}")
