@@ -64,7 +64,7 @@ Comment: <your evaluation>
     content = response.choices[0].message.content
     score_line = next((line for line in content.splitlines() if "Score:" in line), "Score: 0/10")
     comment_line = next((line for line in content.splitlines() if "Comment:" in line), "Comment: No comment.")
-    score = int(score_line.split(":")[1].split("/")[0].strip())
+    score = float(score_line.split(":")[1].split("/")[0].strip())
     comment = comment_line.split(":", 1)[1].strip()
     return score, comment
 
@@ -90,8 +90,8 @@ def run_test_suite():
     print("🚀 Generating test questions using Mistral Medium...")
     questions = generate_test_questions()
     results = []
-    total_score = 0
-    threshold_score = 7  # ✅ Minimum required average score
+    total_score = 0.0
+    threshold_score = 7.0  # ✅ Minimum required average score
 
     for idx, question in enumerate(questions, 1):
         print(f"\n🔹 Q{idx}: {question}")
