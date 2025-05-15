@@ -2,7 +2,7 @@ from tools import use_gemini, use_deepseek
 from config import llms_config
 from langchain_core.messages import AIMessage, SystemMessage
 
-# --- Load LLMs & bind once ---
+# --- Load LLMs & bind tools once ---
 llm_gemini, llm_deepseek = llms_config.get_llms()
 tools = [use_gemini, use_deepseek]
 agent = llm_gemini.bind_tools(tools)
@@ -13,40 +13,48 @@ def prompt_ai(messages):
     system_msgs = [msg for msg in messages if isinstance(msg, SystemMessage)]
     recent_msgs = system_msgs + messages[-(max_history - len(system_msgs)):] if len(messages) > max_history else messages
 
-    #print("\n[AGENT] 📩 Invoking agent with recent messages:")
-    #for msg in recent_msgs:
-        #print(f"   - [{msg.type}] {msg.content}")
-
     try:
         response = agent.invoke(recent_msgs)
-        #print(f"[AGENT] 🤖 Agent responded with: {response.content}")
 
-        if not (hasattr(response, "tool_calls") and response.tool_calls):
-            #print("[AGENT] ✅ No tool call detected, returning response directly.")
-            return response
+        # Check if the response has valid tool calls
+        if not hasattr(response, "tool_calls") or not isinstance(response.tool_calls, list) or not response.tool_calls:
+            return response  # No tool call detected, return the agent's response directly
+
+        # Warn the user if multiple tool calls are detected and handle only the first one
+        if len(response.tool_calls) > 1:
+            return AIMessage(content="⚠️ Multiple tool calls detected. Only the first one will be processed.")
 
         tool_call = response.tool_calls[0]
-        tool_name = tool_call["name"]
-        question = tool_call["args"].get("question", "")
 
-        #print(f"[AGENT] 🛠 Tool call detected: {tool_name} with question: {question}")
+        # Safely access 'name' and 'args'
+        tool_name = tool_call.get("name", None)
 
+        args = tool_call.get("args", {})
+
+        if not tool_name:
+            return AIMessage(content="❌ Invalid tool call: missing 'name' key.")
+
+
+        question = args.get("question", "").strip()
+        if not question:
+            return AIMessage(content="❌ Invalid tool call: missing or empty 'question' argument.")
+
+        # Safely select the appropriate tool
         selected_tool = {
             "use_gemini": use_gemini,
             "use_deepseek": use_deepseek,
         }.get(tool_name)
 
         if not selected_tool:
-            #print(f"[AGENT] ❌ Unknown tool '{tool_name}'.")
             return AIMessage(content=f"❌ Unknown tool '{tool_name}'.")
 
-        # Invoke tool and return its output directly
+        # Invoke the tool and check its output
         tool_output = selected_tool.invoke(question)
-        #print(f"[AGENT] 🔧 Tool '{tool_name}' returned:\n{tool_output}")
 
-        # Direct return as AIMessage (no synthesis)
+        if not tool_output or not isinstance(tool_output, str) or not tool_output.strip():
+            return AIMessage(content="❌ Tool returned an empty or invalid response.")
+
         return AIMessage(content=tool_output)
 
     except Exception as e:
-        #print(f"[AGENT] ❌ An error occurred during processing: {e}")
         return AIMessage(content=f"❌ An error occurred during processing: {e}")

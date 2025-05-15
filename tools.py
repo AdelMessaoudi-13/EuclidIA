@@ -12,19 +12,11 @@ def use_gemini(question: str) -> str:
     if 'loading_placeholder' in st.session_state:
         st.session_state.loading_placeholder.markdown("📘 **Explaining...**")
 
-    # Log the input sent to Gemini API
-    #print(f"\n[USE_GEMINI] 🔍 Received question:\n{question}")
-
     try:
         response = llm_gemini.invoke(question)
 
-        # Log the response content from Gemini API
-        #print(f"[USE_GEMINI] ✅ API response:\n{response.content}")
-
         return response.content
     except Exception as e:
-        # Log the exception from Gemini API
-        #print(f"[USE_GEMINI] ❌ API failed:\n{e}")
         st.error(f"Gemini failed: {e}")
         return f"[ERROR] Gemini failed: {e}"
     finally:
@@ -38,19 +30,11 @@ def use_deepseek(question: str) -> str:
     if 'loading_placeholder' in st.session_state:
         st.session_state.loading_placeholder.markdown("🧠 **Reasoning...**")
 
-    # Log the input sent to DeepSeek API
-    #print(f"\n[USE_DEEPSEEK] 🔍 Received question:\n{question}")
-
     try:
         response = llm_deepseek.invoke(question)
 
-        # Log the response content from DeepSeek API
-        #print(f"[USE_DEEPSEEK] ✅ API response:\n{response.content}")
-
         return response.content
     except Exception as e:
-        # Log the exception from DeepSeek API
-        #print(f"[USE_DEEPSEEK] ❌ API failed:\n{e}")
         st.error(f"DeepSeek failed: {e}")
         return f"[ERROR] DeepSeek failed: {e}"
     finally:

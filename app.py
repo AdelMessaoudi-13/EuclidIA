@@ -22,7 +22,8 @@ def get_img_as_base64(file_name):
     with open(abs_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode()
 
-logo_base64 = get_img_as_base64('euclidia_logo.png')
+logo_base64 = get_img_as_base64('assets/euclidia_logo.png')
+
 # --- Sidebar ---
 with st.sidebar:
     st.markdown(f"""
@@ -100,17 +101,6 @@ if clear_clicked:
     st.session_state.pop("input_field", None)
     st.rerun()
 
-# --- Auto-send on Enter ---
-#if "input_field" in st.session_state:
-#    input_value = st.session_state["input_field"].strip()
-#else:
-#    input_value = ""
-
-#input_changed = input_value != "" and input_value != st.session_state.user_input
-
-#if input_changed and not send_clicked:
-#    send_clicked = True
-
 # --- Processing ---
 input_value = user_input.strip()
 
@@ -125,8 +115,6 @@ if send_clicked and input_value:
         st.session_state.loading_placeholder.markdown("⏳ **Thinking...**")
 
         try:
-            # Add the user's question as a HumanMessage to the conversation history
-            #print(f"[APP] 💬 User input: '{input_value}'")
             st.session_state.messages.append(HumanMessage(content=input_value))
 
             # Call the AI agent logic (prompt_ai) with the updated conversation history
@@ -135,8 +123,6 @@ if send_clicked and input_value:
 
             # Append the final AI response to the conversation history
             st.session_state.messages.append(response)
-
-            #print(f"[APP] 🤖 Assistant response: '{getattr(response, 'content', '')}'")
 
             # Display the final AI response if it contains text
             if hasattr(response, "content") and response.content:
@@ -148,7 +134,6 @@ if send_clicked and input_value:
                 st.warning("No response was generated.")
 
         except Exception as e:
-            #print(f"[APP] ❌ Error during processing: {e}")
             st.error(f"Error: {e}")
         finally:
             # Cleanup the loading placeholder when done (success or error)
