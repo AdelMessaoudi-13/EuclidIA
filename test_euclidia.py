@@ -112,12 +112,12 @@ def handle_tool_calls(messages, ai_response):
             if selected_tool:
                 try:
                     tool_output = selected_tool.invoke(question)
+                    messages.append(ToolMessage(content=tool_output, tool_call_id=tool_call["id"]))
                 except Exception as e:
-                    tool_output = f"❌ Tool '{tool_name}' failed: {str(e)}"
+                    error_msg = f"❌ Tool '{tool_name}' failed: {str(e)}"
+                    messages.append(ToolMessage(content=error_msg, tool_call_id=tool_call["id"]))
 
-                messages.append(ToolMessage(content=tool_output, tool_call_id=tool_call["id"]))
-
-        # ⚠️ MUST append the new AI response after relaunch
+        # MUST append the new AI response after relaunch
         new_response = prompt_ai(messages)
         messages.append(new_response)
         return new_response
@@ -137,13 +137,14 @@ def run_test_suite():
         print(f"\n🔹 Q{idx}: {question}")
         try:
             messages = [system_msg, HumanMessage(content=question)]
-            response = prompt_ai(messages)
-            messages.append(response)
+
+            initial_response = prompt_ai(messages)
+            messages.append(initial_response)
 
             # --- Handle tool calls if present ---
 
             # After handling possible tool calls, ensure to extract the latest answer from the conversation history
-            response = handle_tool_calls(messages, response)
+            final_response = handle_tool_calls(messages, initial_response)
 
             # Always extract the latest relevant message (ToolMessage or AIMessage)
             last_message = messages[-1]
