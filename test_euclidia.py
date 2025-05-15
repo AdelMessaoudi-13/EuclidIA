@@ -2,7 +2,7 @@ import time
 import os
 import pandas as pd
 from agent_logic import prompt_ai
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage
 from tools import use_gemini, use_deepseek
 from mistralai import Mistral
 from datetime import datetime
@@ -117,10 +117,13 @@ def handle_tool_calls(messages, ai_response):
 
                 messages.append(ToolMessage(content=tool_output, tool_call_id=tool_call["id"]))
 
-        # Relancer l'agent après les tool calls
-        return prompt_ai(messages)
+        # ⚠️ MUST append the new AI response after relaunch
+        new_response = prompt_ai(messages)
+        messages.append(new_response)
+        return new_response
     else:
         return ai_response
+
 
 # --- Main test runner ---
 def run_test_suite():
@@ -135,6 +138,7 @@ def run_test_suite():
         try:
             messages = [system_msg, HumanMessage(content=question)]
             response = prompt_ai(messages)
+            messages.append(response)
 
             # --- Handle tool calls if present ---
 
