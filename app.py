@@ -2,6 +2,9 @@ import streamlit as st
 from langchain_core.messages import SystemMessage, HumanMessage
 from config import check_api_keys
 from agent_logic import prompt_ai
+from langchain_core.messages import ToolMessage
+from tools import use_gemini, use_deepseek
+import json
 import base64
 
 # --- Check API keys ---
@@ -15,7 +18,7 @@ def get_img_as_base64(file_path):
     with open(file_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode()
 
-logo_base64 = get_img_as_base64('euclidia_logo.png')
+logo_base64 = get_img_as_base64('assets/euclidia_logo.png')
 
 # --- Sidebar ---
 with st.sidebar:
@@ -71,10 +74,6 @@ Always use **only one** of these two tools to answer.
 if "user_input" not in st.session_state:
     st.session_state.user_input = ""
 
-# Initialize model tracking
-#if "current_model" not in st.session_state:
-#    st.session_state.current_model = None
-
 # --- Input field and buttons ---
 col1, col2, col3 = st.columns([6, 0.7, 0.7])
 with col1:
@@ -82,7 +81,7 @@ with col1:
         label="Math question input",
         placeholder="Ask your question...",
         label_visibility="collapsed",
-        key="input_field"  # no value set here
+        key="input_field"
     )
 with col2:
     send_clicked = st.button("➤", help="Send", use_container_width=True)
@@ -95,7 +94,7 @@ st.markdown("</div></div>", unsafe_allow_html=True)
 if clear_clicked:
     st.session_state.user_input = ""
     st.session_state.messages = st.session_state.messages[:1]
-    st.session_state.pop("input_field", None)  # <- vide proprement
+    st.session_state.pop("input_field", None)
     st.rerun()
 
 # --- Auto-send on Enter ---
@@ -111,6 +110,8 @@ if input_changed and not send_clicked:
 
 # --- Processing ---
 if send_clicked and input_value:
+    #print(f"[DEBUG] User input captured: '{input_value}'")
+
     st.session_state.user_input = input_value
 
     st.session_state.loading_placeholder = st.empty()
@@ -118,16 +119,57 @@ if send_clicked and input_value:
 
     try:
         st.session_state.messages.append(HumanMessage(content=input_value))
+
+        #print("[DEBUG] Messages sent to agent:")
+        #for msg in st.session_state.messages:
+        #    print(f"  - [{msg.type}] {msg.content}")
+
         response = prompt_ai(st.session_state.messages)
         st.session_state.messages.append(response)
 
-        st.session_state.loading_placeholder.empty()
+        if hasattr(response, "tool_calls") and response.tool_calls:
+            for tool_call in response.tool_calls:
+                tool_name = tool_call["name"]
+                args = tool_call["args"]
 
-        if hasattr(response, "content") and response.content:
-            st.success("Assistant's response:")
-            st.markdown(response.content, unsafe_allow_html=True)
+                #print(f"[DEBUG] Received tool_call:\n{json.dumps(tool_call, indent=2)}")
+                question = args.get("question", "") if args else ""
+
+                selected_tool = {
+                    "use_gemini": use_gemini,
+                    "use_deepseek": use_deepseek,
+                }.get(tool_name)
+
+                if selected_tool:
+                    try:
+                        tool_output = selected_tool.invoke(question)
+                    except Exception as e:
+                        tool_output = f"❌ Tool '{tool_name}' failed: {str(e)}"
+                        st.error(tool_output)
+
+                    st.session_state.messages.append(
+                        ToolMessage(content=tool_output, tool_call_id=tool_call["id"])
+                    )
+
+            final_response = prompt_ai(st.session_state.messages)
+            st.session_state.messages.append(final_response)
+
+            if hasattr(final_response, "content") and final_response.content:
+                st.session_state.loading_placeholder.empty() #
+                st.success("Assistant's response:")
+                st.markdown(final_response.content, unsafe_allow_html=True)
+            else:
+                st.session_state.loading_placeholder.empty() #
+                st.warning("No response was generated after tool call.")
         else:
-            st.warning("No response was generated.")
+            if hasattr(response, "content") and response.content:
+                st.session_state.loading_placeholder.empty() #
+                st.success("Assistant's response:")
+                st.markdown(response.content, unsafe_allow_html=True)
+            else:
+                st.session_state.loading_placeholder.empty() #
+                st.warning("No response was generated.")
+
     except Exception as e:
         st.error(f"Error: {e}")
     finally:

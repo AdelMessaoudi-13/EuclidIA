@@ -24,7 +24,11 @@ Generate 10 test questions for evaluating a math assistant:
 - 2 mathematically incorrect or trick questions.
 - 1 off-topic (non-math) question.
 
-Return a numbered list only.
+Instructions:
+- Return only a numbered list from 1 to 10.
+- DO NOT add any explanations, hints, categories, or comments.
+- DO NOT write any text in parentheses.
+- Each line must contain ONLY the question text.
 """
     # Update: correct syntax for v1.7.0
     response = client.chat.complete(

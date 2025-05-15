@@ -1,52 +1,28 @@
 import streamlit as st
 from tools import use_gemini, use_deepseek
-from langchain_core.messages import ToolMessage
 from config import llms_config
+import json
 
 # --- Load LLM ---
 llm_gemini, llm_deepseek = llms_config.get_llms()
 
-def prompt_ai(messages, nested_calls=0):
-    if nested_calls > 5:
-        raise Exception("Too many nested calls.")
-
+def prompt_ai(messages):
     tools = [use_gemini, use_deepseek]
     agent = llm_gemini.bind_tools(tools)
 
-    # --- Memory trimming ---
-    max_history = 15  # Nombre maximum de messages à conserver
+    max_history = 15
     recent_messages = messages[-max_history:] if len(messages) > max_history else messages
+
+    # Log the recent messages sent to the agent
+    #print("[DEBUG] Sending messages to agent:")
+    #for msg in recent_messages:
+    #    print(f"  - [{msg.type}] {msg.content}")
 
     try:
         ai_response = agent.invoke(recent_messages)
+        #print("[DEBUG] Agent response received.")
+        return ai_response
     except Exception as e:
-        st.error(f"❌ Agent error: {e}")
-        #return HumanMessage(content="⚠️ An error occurred while processing your request.")
+        #print(f"[ERROR] Agent invocation failed with: {e}")
         from langchain_core.messages import AIMessage
         return AIMessage(content="❌ An error occurred during processing.")
-
-    if hasattr(ai_response, "tool_calls") and ai_response.tool_calls:
-        available_tools = {
-            "use_gemini": use_gemini,
-            "use_deepseek": use_deepseek,
-        }
-
-        messages.append(ai_response)
-
-        for tool_call in ai_response.tool_calls:
-            tool_name = tool_call["name"]
-            args = tool_call["args"]
-            selected_tool = available_tools.get(tool_name)
-
-            if selected_tool:
-                try:
-                    tool_output = selected_tool.invoke(args.get("question", ""))
-                except Exception as e:
-                    tool_output = f"❌ Tool '{tool_name}' failed: {str(e)}"
-                    st.error(tool_output)
-
-                messages.append(ToolMessage(content=tool_output, tool_call_id=tool_call["id"]))
-
-        return prompt_ai(messages, nested_calls + 1)
-
-    return ai_response
