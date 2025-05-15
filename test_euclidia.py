@@ -2,7 +2,8 @@ import time
 import os
 import pandas as pd
 from agent_logic import prompt_ai
-from langchain_core.messages import HumanMessage, SystemMessage
+from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
+from tools import use_gemini, use_deepseek
 from mistralai import Mistral
 from datetime import datetime
 
@@ -95,6 +96,32 @@ Carefully analyze each question and choose the most appropriate tool:
 Always use only one of these two tools to answer.
 """)
 
+# --- Handle tool calls like in app.py ---
+def handle_tool_calls(messages, ai_response):
+    if hasattr(ai_response, "tool_calls") and ai_response.tool_calls:
+        for tool_call in ai_response.tool_calls:
+            tool_name = tool_call["name"]
+            args = tool_call["args"]
+            question = args.get("question", "") if args else ""
+
+            selected_tool = {
+                "use_gemini": use_gemini,
+                "use_deepseek": use_deepseek,
+            }.get(tool_name)
+
+            if selected_tool:
+                try:
+                    tool_output = selected_tool.invoke(question)
+                except Exception as e:
+                    tool_output = f"❌ Tool '{tool_name}' failed: {str(e)}"
+
+                messages.append(ToolMessage(content=tool_output, tool_call_id=tool_call["id"]))
+
+        # Relancer l'agent après les tool calls
+        return prompt_ai(messages)
+    else:
+        return ai_response
+
 # --- Main test runner ---
 def run_test_suite():
     print("🚀 Generating test questions using Mistral Medium...")
@@ -108,6 +135,10 @@ def run_test_suite():
         try:
             messages = [system_msg, HumanMessage(content=question)]
             response = prompt_ai(messages)
+
+            # --- Handle tool calls if present ---
+            response = handle_tool_calls(messages, response)
+
             answer = response.content if hasattr(response, "content") else str(response)
 
             score, comment = evaluate_response(question, answer)
