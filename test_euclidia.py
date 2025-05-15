@@ -137,9 +137,24 @@ def run_test_suite():
             response = prompt_ai(messages)
 
             # --- Handle tool calls if present ---
+
+            # After handling possible tool calls, ensure to extract the latest answer from the conversation history
             response = handle_tool_calls(messages, response)
 
-            answer = response.content if hasattr(response, "content") else str(response)
+            # Always extract the latest relevant message (ToolMessage or AIMessage)
+            last_message = messages[-1]
+
+            # ToolMessage: a specific message type that stores the output of a tool (like use_gemini or use_deepseek)
+            # AIMessage: a message type that stores the AI agent's direct response
+            # HumanMessage: a user message (should not normally be considered as 'answer' but kept for safety fallback)
+            if isinstance(last_message, (ToolMessage, HumanMessage)):
+                answer = last_message.content
+            elif hasattr(last_message, "content"):
+                answer = last_message.content
+            else:
+                answer = str(last_message)
+
+            #answer = response.content if hasattr(response, "content") else str(response)
 
             score, comment = evaluate_response(question, answer)
             total_score += score
