@@ -147,12 +147,13 @@ def run_test_suite():
             # ToolMessage: a specific message type that stores the output of a tool (like use_gemini or use_deepseek)
             # AIMessage: a message type that stores the AI agent's direct response
             # HumanMessage: a user message (should not normally be considered as 'answer' but kept for safety fallback)
-            if isinstance(last_message, (ToolMessage, HumanMessage)):
+            if isinstance(last_message, ToolMessage):
                 answer = last_message.content
-            elif hasattr(last_message, "content"):
+            elif isinstance(last_message, AIMessage):
                 answer = last_message.content
             else:
-                answer = str(last_message)
+                answer = "No valid AI or tool response was generated."
+
 
             #answer = response.content if hasattr(response, "content") else str(response)
 
