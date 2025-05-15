@@ -2,10 +2,10 @@ import streamlit as st
 from langchain_core.messages import SystemMessage, HumanMessage
 from config import check_api_keys
 from agent_logic import prompt_ai
-from langchain_core.messages import ToolMessage
 from tools import use_gemini, use_deepseek
 import json
 import base64
+import os
 
 # --- Check API keys ---
 check_api_keys()
@@ -14,12 +14,15 @@ check_api_keys()
 st.set_page_config(page_title="EuclidIA | Think. Explain. Prove.", page_icon="📐")
 
 # Function to load and encode the logo
-def get_img_as_base64(file_path):
-    with open(file_path, "rb") as image_file:
+def get_img_as_base64(file_name):
+    # Get absolute path of the file relative to this script
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    abs_path = os.path.join(script_dir, file_name)
+
+    with open(abs_path, "rb") as image_file:
         return base64.b64encode(image_file.read()).decode()
 
-logo_base64 = get_img_as_base64('assets/euclidia_logo.png')
-
+logo_base64 = get_img_as_base64('euclidia_logo.png')
 # --- Sidebar ---
 with st.sidebar:
     st.markdown(f"""
@@ -98,80 +101,56 @@ if clear_clicked:
     st.rerun()
 
 # --- Auto-send on Enter ---
-if "input_field" in st.session_state:
-    input_value = st.session_state["input_field"].strip()
-else:
-    input_value = ""
+#if "input_field" in st.session_state:
+#    input_value = st.session_state["input_field"].strip()
+#else:
+#    input_value = ""
 
-input_changed = input_value != "" and input_value != st.session_state.user_input
+#input_changed = input_value != "" and input_value != st.session_state.user_input
 
-if input_changed and not send_clicked:
-    send_clicked = True
+#if input_changed and not send_clicked:
+#    send_clicked = True
 
 # --- Processing ---
+input_value = user_input.strip()
+
 if send_clicked and input_value:
-    #print(f"[DEBUG] User input captured: '{input_value}'")
+    # Check anti-duplication: don't add twice the same HumanMessage
+    if not (st.session_state.messages and isinstance(st.session_state.messages[-1], HumanMessage) and st.session_state.messages[-1].content == input_value):
+        # Store the user's input in the session state (for consistency)
+        st.session_state.user_input = input_value
 
-    st.session_state.user_input = input_value
+        # Create a placeholder to show the "Thinking..." indicator while processing
+        st.session_state.loading_placeholder = st.empty()
+        st.session_state.loading_placeholder.markdown("⏳ **Thinking...**")
 
-    st.session_state.loading_placeholder = st.empty()
-    st.session_state.loading_placeholder.markdown("⏳ **Thinking...**")
+        try:
+            # Add the user's question as a HumanMessage to the conversation history
+            #print(f"[APP] 💬 User input: '{input_value}'")
+            st.session_state.messages.append(HumanMessage(content=input_value))
 
-    try:
-        st.session_state.messages.append(HumanMessage(content=input_value))
+            # Call the AI agent logic (prompt_ai) with the updated conversation history
+            # The agent will handle tool calls, execution, and final synthesis by itself
+            response = prompt_ai(st.session_state.messages)
 
-        #print("[DEBUG] Messages sent to agent:")
-        #for msg in st.session_state.messages:
-        #    print(f"  - [{msg.type}] {msg.content}")
+            # Append the final AI response to the conversation history
+            st.session_state.messages.append(response)
 
-        response = prompt_ai(st.session_state.messages)
-        st.session_state.messages.append(response)
+            #print(f"[APP] 🤖 Assistant response: '{getattr(response, 'content', '')}'")
 
-        if hasattr(response, "tool_calls") and response.tool_calls:
-            for tool_call in response.tool_calls:
-                tool_name = tool_call["name"]
-                args = tool_call["args"]
-
-                #print(f"[DEBUG] Received tool_call:\n{json.dumps(tool_call, indent=2)}")
-                question = args.get("question", "") if args else ""
-
-                selected_tool = {
-                    "use_gemini": use_gemini,
-                    "use_deepseek": use_deepseek,
-                }.get(tool_name)
-
-                if selected_tool:
-                    try:
-                        tool_output = selected_tool.invoke(question)
-                    except Exception as e:
-                        tool_output = f"❌ Tool '{tool_name}' failed: {str(e)}"
-                        st.error(tool_output)
-
-                    st.session_state.messages.append(
-                        ToolMessage(content=tool_output, tool_call_id=tool_call["id"])
-                    )
-
-            final_response = prompt_ai(st.session_state.messages)
-            st.session_state.messages.append(final_response)
-
-            if hasattr(final_response, "content") and final_response.content:
-                st.session_state.loading_placeholder.empty() #
-                st.success("Assistant's response:")
-                st.markdown(final_response.content, unsafe_allow_html=True)
-            else:
-                st.session_state.loading_placeholder.empty() #
-                st.warning("No response was generated after tool call.")
-        else:
+            # Display the final AI response if it contains text
             if hasattr(response, "content") and response.content:
-                st.session_state.loading_placeholder.empty() #
+                st.session_state.loading_placeholder.empty()
                 st.success("Assistant's response:")
                 st.markdown(response.content, unsafe_allow_html=True)
             else:
-                st.session_state.loading_placeholder.empty() #
+                st.session_state.loading_placeholder.empty()
                 st.warning("No response was generated.")
 
-    except Exception as e:
-        st.error(f"Error: {e}")
-    finally:
-        if 'loading_placeholder' in st.session_state:
-            del st.session_state.loading_placeholder
+        except Exception as e:
+            #print(f"[APP] ❌ Error during processing: {e}")
+            st.error(f"Error: {e}")
+        finally:
+            # Cleanup the loading placeholder when done (success or error)
+            if 'loading_placeholder' in st.session_state:
+                del st.session_state.loading_placeholder

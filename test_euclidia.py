@@ -96,35 +96,6 @@ Carefully analyze each question and choose the most appropriate tool:
 Always use only one of these two tools to answer.
 """)
 
-# --- Handle tool calls like in app.py ---
-def handle_tool_calls(messages, ai_response):
-    if hasattr(ai_response, "tool_calls") and ai_response.tool_calls:
-        for tool_call in ai_response.tool_calls:
-            tool_name = tool_call["name"]
-            args = tool_call["args"]
-            question = args.get("question", "") if args else ""
-
-            selected_tool = {
-                "use_gemini": use_gemini,
-                "use_deepseek": use_deepseek,
-            }.get(tool_name)
-
-            if selected_tool:
-                try:
-                    tool_output = selected_tool.invoke(question)
-                    messages.append(ToolMessage(content=tool_output, tool_call_id=tool_call["id"]))
-                except Exception as e:
-                    error_msg = f"❌ Tool '{tool_name}' failed: {str(e)}"
-                    messages.append(ToolMessage(content=error_msg, tool_call_id=tool_call["id"]))
-
-        # MUST append the new AI response after relaunch
-        new_response = prompt_ai(messages)
-        messages.append(new_response)
-        return new_response
-    else:
-        return ai_response
-
-
 # --- Main test runner ---
 def run_test_suite():
     print("🚀 Generating test questions using Mistral Medium...")
@@ -138,29 +109,9 @@ def run_test_suite():
         try:
             messages = [system_msg, HumanMessage(content=question)]
 
-            initial_response = prompt_ai(messages)
-            messages.append(initial_response)
-
-            # --- Handle tool calls if present ---
-
-            # After handling possible tool calls, ensure to extract the latest answer from the conversation history
-            final_response = handle_tool_calls(messages, initial_response)
-
-            # Always extract the latest relevant message (ToolMessage or AIMessage)
-            last_message = messages[-1]
-
-            # ToolMessage: a specific message type that stores the output of a tool (like use_gemini or use_deepseek)
-            # AIMessage: a message type that stores the AI agent's direct response
-            # HumanMessage: a user message (should not normally be considered as 'answer' but kept for safety fallback)
-            if isinstance(last_message, ToolMessage):
-                answer = last_message.content
-            elif isinstance(last_message, AIMessage):
-                answer = last_message.content
-            else:
-                answer = "No valid AI or tool response was generated."
-
-
-            #answer = response.content if hasattr(response, "content") else str(response)
+            # Direct call since prompt_ai now handles everything and returns AIMessage with final content
+            response = prompt_ai(messages)
+            answer = response.content if hasattr(response, "content") else str(response)
 
             score, comment = evaluate_response(question, answer)
             total_score += score
@@ -183,6 +134,7 @@ def run_test_suite():
                 "Score": 0,
                 "Comment": str(e)
             })
+
 
     avg = total_score / len(questions)
 
