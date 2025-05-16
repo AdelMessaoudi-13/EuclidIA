@@ -7,6 +7,7 @@ llm_gemini, llm_deepseek = llms_config.get_llms()
 tools = [use_gemini, use_deepseek]
 agent = llm_gemini.bind_tools(tools)
 
+# --- Agent logic ---
 def prompt_ai(messages):
     """Handles tool call and returns the tool output directly (no synthesis)."""
     max_history = 15
