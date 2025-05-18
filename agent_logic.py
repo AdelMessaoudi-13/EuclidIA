@@ -7,6 +7,29 @@ llm_gemini, llm_deepseek = llms_config.get_llms()
 tools = [use_gemini, use_deepseek]
 agent = llm_gemini.bind_tools(tools)
 
+def clean_latex_with_gemini(text: str) -> str:
+    """Uses Gemini to fix unformatted LaTeX expressions."""
+    cleaning_prompt = f"""
+Role:
+You are a post-processing assistant. You are given a math explanation that may contain LaTeX expressions that are not properly formatted.
+
+Guidelines:
+- Ensure all mathematical expressions are correctly formatted in LaTeX.
+- Use $...$ for inline expressions.
+- Use $$...$$ for block expressions.
+- Avoid using \\( ... \\) or \\[ ... \\] for LaTeX formatting.
+- Do not change the structure, content, or meaning of the explanation.
+- Do not comment, explain, or add anything — return only the corrected version.
+
+Here is the original text:
+
+{text}
+"""
+
+
+    response = llm_gemini.invoke(cleaning_prompt)
+    return response.content.strip()
+
 # --- Agent logic ---
 def prompt_ai(messages):
     """Handles tool call and returns the tool output directly (no synthesis)."""
@@ -51,6 +74,10 @@ def prompt_ai(messages):
 
         # Invoke the tool and check its output
         tool_output = selected_tool.invoke(question)
+
+        # If the tool was DeepSeek, clean the output via Gemini
+        if tool_name == "use_deepseek":
+            tool_output = clean_latex_with_gemini(tool_output)
 
         if not tool_output or not isinstance(tool_output, str) or not tool_output.strip():
             return AIMessage(content="❌ Tool returned an empty or invalid response.")

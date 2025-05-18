@@ -45,16 +45,13 @@ def use_deepseek(question: str) -> str:
         # Enrich prompt with explicit step-by-step and formula requirements
         prompt = f"""
 You are a mathematics assistant specialized in rigorous proofs, demonstrations, and problem solving.
+
 You must produce structured, step-by-step reasoning with clear justifications for each step.
-
-Always include all relevant equations, formulas, and intermediate steps.
-
-All mathematical formulas, equations, and expressions must always be written using LaTeX notation and wrapped inside $$...$$ to ensure proper rendering.
-
-Do not provide only a conclusion without detailed reasoning.
+Do not provide only a conclusion — detailed reasoning is always required.
 
 Problem: {question}
 """
+
         response = llm_deepseek.invoke(prompt)
 
         return response.content
