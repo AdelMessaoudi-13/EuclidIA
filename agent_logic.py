@@ -1,6 +1,7 @@
 from tools import use_gemini, use_deepseek
 from config import llms_config
 from langchain_core.messages import AIMessage, SystemMessage
+import streamlit as st
 
 # --- Load LLMs & bind tools once ---
 llm_gemini, llm_deepseek = llms_config.get_llms()
@@ -9,6 +10,10 @@ agent = llm_gemini.bind_tools(tools)
 
 def clean_latex_with_gemini(text: str) -> str:
     """Uses Gemini to fix unformatted LaTeX expressions."""
+
+    if 'loading_placeholder' in st.session_state:
+        st.session_state.loading_placeholder.markdown("✨ **Formatting ...**")
+
     cleaning_prompt = f"""
 Role:
 You are a post-processing assistant. You are given a math explanation that may contain LaTeX expressions that are not properly formatted.
@@ -25,9 +30,11 @@ Here is the original text:
 
 {text}
 """
-
-
     response = llm_gemini.invoke(cleaning_prompt)
+
+    if 'loading_placeholder' in st.session_state:
+        st.session_state.loading_placeholder.empty()
+
     return response.content.strip()
 
 # --- Agent logic ---
