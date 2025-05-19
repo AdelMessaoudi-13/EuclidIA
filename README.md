@@ -104,7 +104,7 @@ euclidia/
 ## 🤝 Contribute
 
 Want to improve or extend EuclidIA ?  
-Open an issue or a pull request — your contributions are welcome!
+Open an issue or a pull request — your contributions are welcome !
 
 ---
 
