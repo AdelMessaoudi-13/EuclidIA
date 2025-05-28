@@ -33,8 +33,8 @@ It answers your questions by explaining clearly or reasoning precisely — just 
 git clone https://github.com/AdelMessaoudi-13/EuclidIA
 cd EuclidIA
 
-Add your API keys in .env
-Required: GOOGLE_API_KEY, DEEPSEEK_API_KEY
+Add your API keys in .env.example and rename it to .env
+Required : GOOGLE_API_KEY, DEEPSEEK_API_KEY
 
 pip install -r requirements.txt
 streamlit run app.py
@@ -46,7 +46,7 @@ Then go to `http://localhost:8501`.
 
 ## 💬 Examples
 
-> **"What is the Laplace transform?"**  
+> **"What is the Laplace transform ?"**  
 > → 📘 **Explain clearly**
 
 > **"Prove that √2 is irrational."**  
@@ -58,7 +58,7 @@ Then go to `http://localhost:8501`.
 
 Every day, EuclidIA is automatically tested using GitHub Actions.
 
-The test suite includes:
+The test suite includes :
 - Valid mathematics questions
 - Invalid or off-topic questions
 - Ambiguous or trick questions
@@ -66,7 +66,7 @@ The test suite includes:
 - The test fails automatically if the average score is below a fixed threshold
 - Exactly 10 test questions are evaluated per run
 
-📊 Latest daily test result:  
+📊 Latest daily test result :  
 → Go to [Actions](https://github.com/AdelMessaoudi-13/EuclidIA/actions) → click latest run → download CSV artifact
 
 ---

@@ -2,8 +2,7 @@ import time
 import os
 import pandas as pd
 from agent_logic import prompt_ai
-from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage, AIMessage
-from tools import use_gemini, use_deepseek
+from langchain_core.messages import HumanMessage, SystemMessage
 from mistralai import Mistral
 from datetime import datetime
 
@@ -17,30 +16,57 @@ client = Mistral(api_key=api_key)
 
 # --- Generate 10 diverse test questions using Mistral Medium ---
 def generate_test_questions():
-    prompt = """
-Generate 10 test questions for evaluating a math assistant:
-- 3 clear and correct math questions.
-- 2 questions with spelling mistakes in mathematical terms.
-- 2 vague or ambiguous math-related questions.
-- 2 mathematically incorrect or trick questions.
-- 1 off-topic (non-math) question.
+    prompt = """You are generating test questions for a mathematics AI assistant called EuclidIA.
+Generate exactly 10 questions following this structure:
 
-Instructions:
-- Return only a numbered list from 1 to 10.
-- DO NOT add any explanations, hints, categories, or comments.
-- DO NOT write any text in parentheses.
-- Each line must contain ONLY the question text.
-"""
-    # Update: correct syntax for v1.7.0
-    response = client.chat.complete(
-        model="mistral-medium",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    lines = response.choices[0].message.content.strip().split("\n")
-    questions = [line.lstrip("0123456789. ").strip() for line in lines if line.strip()]
+EXPLANATION QUESTIONS (2 questions - should trigger definition/concept explanations):
+1. [Question asking for definition or explanation of a math concept]
+2. [Question asking for explanation of a mathematical property or theorem - WITH deliberate spelling mistake or typo]
 
-    # Ensure only 10 questions are returned
-    return questions[:10]
+PROOF QUESTIONS (2 questions - should trigger formal mathematical proofs):
+3. [Question asking to prove a mathematical theorem]
+4. [Question asking to demonstrate a mathematical property - WITH deliberate spelling mistake or typo]
+
+PROBLEM SOLVING (2 questions - should trigger step-by-step calculations):
+5. [Concrete math problem requiring calculations, like geometry, algebra, calculus]
+6. [Another concrete problem with numerical solution]
+
+ROBUSTNESS TESTS (2 questions - should be rejected as non-mathematical):
+7. [Non-mathematical question like weather, politics, etc.]
+8. [Impossible mathematical claim like "prove 1=2"]
+
+AMBIGUOUS QUESTIONS (2 questions - should trigger error handling):
+9. [Incomplete or unclear mathematical question]
+10. [Question with missing information]
+
+IMPORTANT: Return ONLY the numbered list of questions. Do NOT add any comments, notes, explanations, or text in parentheses. Each line should contain ONLY the question number and the question text."""
+    try:
+        # Update: correct syntax for v1.7.0 with higher temperature for variety
+        response = client.chat.complete(
+            model="mistral-medium",
+            messages=[{"role": "user", "content": prompt}],
+            temperature=0.8  # Higher temperature for more diverse questions
+        )
+        lines = response.choices[0].message.content.strip().split("\n")
+        questions = [line.lstrip("0123456789. ").strip() for line in lines if line.strip()]
+
+        # Ensure only 10 questions are returned
+        return questions[:10]
+    except Exception as e:
+        print(f"❌ Error generating test questions: {e}")
+        # Return fallback questions if API fails
+        return [
+            "What is the definition of a derivative?",  # Explanation
+            "Explain the Pythagorean teorem",  # Explanation with typo
+            "Prove that the square root of 2 is irrational",  # Proof
+            "Demonstrate the quadrtic formula",  # Proof with typo
+            "Calculate the area of a triangle with base 5 and height 8",  # Problem solving
+            "Solve the equation 3x² - 7x + 2 = 0",  # Problem solving
+            "What is the weather like today?",  # Non-math question
+            "Prove that 1 equals 2",  # Impossible claim
+            "Calculate the derivative of",  # Incomplete question
+            "Find the solution to the equation"  # Missing equation
+        ]
 
 # --- Evaluate assistant's answer using Mistral Medium ---
 def evaluate_response(question, answer):
@@ -67,17 +93,21 @@ Comment: <your evaluation>
 
 No introduction, no explanations, no greetings, just the two lines inside the code block.
 """
-    # Update: correct syntax for v1.7.0
-    response = client.chat.complete(
-        model="mistral-medium",
-        messages=[{"role": "user", "content": prompt}]
-    )
-    content = response.choices[0].message.content
-    score_line = next((line for line in content.splitlines() if "Score:" in line), "Score: 0/10")
-    comment_line = next((line for line in content.splitlines() if "Comment:" in line), "Comment: No comment.")
-    score = float(score_line.split(":")[1].split("/")[0].strip())
-    comment = comment_line.split(":", 1)[1].strip()
-    return score, comment
+    try:
+        # Update: correct syntax for v1.7.0
+        response = client.chat.complete(
+            model="mistral-medium",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        content = response.choices[0].message.content
+        score_line = next((line for line in content.splitlines() if "Score:" in line), "Score: 0/10")
+        comment_line = next((line for line in content.splitlines() if "Comment:" in line), "Comment: No comment.")
+        score = float(score_line.split(":")[1].split("/")[0].strip())
+        comment = comment_line.split(":", 1)[1].strip()
+        return score, comment
+    except Exception as e:
+        print(f"❌ Error evaluating response: {e}")
+        return 0.0, f"Evaluation failed: {e}"
 
 # --- System message (copied exactly from your code) ---
 system_msg = SystemMessage(content="""# Role

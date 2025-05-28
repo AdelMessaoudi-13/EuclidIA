@@ -2,7 +2,6 @@ import streamlit as st
 from langchain_core.messages import SystemMessage, HumanMessage
 from config import check_api_keys
 from agent_logic import prompt_ai
-from tools import use_gemini, use_deepseek
 import base64
 import os
 
@@ -14,20 +13,28 @@ st.set_page_config(page_title="EuclidIA | Think. Explain. Prove.", page_icon="�
 
 # Function to load and encode the logo
 def get_img_as_base64(file_name):
-    # Get absolute path of the file relative to this script
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    abs_path = os.path.join(script_dir, file_name)
+    try:
+        # Get absolute path of the file relative to this script
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        abs_path = os.path.join(script_dir, file_name)
 
-    with open(abs_path, "rb") as image_file:
-        return base64.b64encode(image_file.read()).decode()
+        with open(abs_path, "rb") as image_file:
+            return base64.b64encode(image_file.read()).decode()
+    except FileNotFoundError:
+        st.warning(f"Logo file {file_name} not found. Using default display.")
+        return ""  # Return empty string for missing logo
+    except Exception as e:
+        st.warning(f"Error loading logo: {e}")
+        return ""
 
 logo_base64 = get_img_as_base64('assets/euclidia_logo.png')
 
 # --- Sidebar ---
 with st.sidebar:
+    logo_html = f'<img src="data:image/png;base64,{logo_base64}" width="140"><br>' if logo_base64 else '<h2>📐 EuclidIA</h2>'
     st.markdown(f"""
     <div style='text-align: center;'>
-        <img src="data:image/png;base64,{logo_base64}" width="140"><br>
+        {logo_html}
         <div style='font-style: italic; margin-top: 0.3rem; line-height: 1.3;'>Think. Explain. Prove.</div>
     </div>
     <hr style='margin-top: 2rem; margin-bottom: 2rem;'>
@@ -46,9 +53,10 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # --- Header (centered, professional) ---
+header_logo = f'<img src="data:image/png;base64,{logo_base64}" style="width: 220px; margin-bottom: 1rem;">' if logo_base64 else '<h1 style="margin-bottom: 1rem;">📐 EuclidIA</h1>'
 st.markdown(f"""
 <div style='display: flex; flex-direction: column; align-items: center; padding-top: 1rem;'>
-    <img src="data:image/png;base64,{logo_base64}" style='width: 220px; margin-bottom: 1rem;'>
+    {header_logo}
     <div style='width: 100%; max-width: 500px;'>
 """, unsafe_allow_html=True)
 
@@ -98,6 +106,15 @@ if clear_clicked:
     st.session_state.user_input = ""
     st.session_state.messages = st.session_state.messages[:1]
     st.session_state.pop("input_field", None)
+
+    # Clean up loading placeholder to prevent memory leaks
+    if 'loading_placeholder' in st.session_state:
+        try:
+            st.session_state.loading_placeholder.empty()
+        except:
+            pass  # Ignore if already cleared
+        del st.session_state.loading_placeholder
+
     st.rerun()
 
 # --- Processing ---
@@ -110,6 +127,13 @@ if send_clicked and input_value:
         st.session_state.user_input = input_value
 
         # Create a placeholder to show the "Thinking..." indicator while processing
+        # Clear any existing placeholder first to avoid race conditions
+        if 'loading_placeholder' in st.session_state:
+            try:
+                st.session_state.loading_placeholder.empty()
+            except:
+                pass  # Ignore if already cleared
+
         st.session_state.loading_placeholder = st.empty()
         st.session_state.loading_placeholder.markdown("⏳ **Thinking...**")
 

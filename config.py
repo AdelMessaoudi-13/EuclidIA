@@ -16,6 +16,19 @@ def check_api_keys():
     if not DEEPSEEK_API_KEY:
         raise ValueError("❌ DEEPSEEK_API_KEY is missing.")
 
+    # Basic format validation
+    if len(GOOGLE_API_KEY.strip()) < 10:
+        raise ValueError("❌ GOOGLE_API_KEY appears to be invalid (too short).")
+    if len(DEEPSEEK_API_KEY.strip()) < 10:
+        raise ValueError("❌ DEEPSEEK_API_KEY appears to be invalid (too short).")
+
+    # Check for common placeholder values
+    invalid_values = ["your_api_key", "placeholder", "xxx", "test", ""]
+    if GOOGLE_API_KEY.lower().strip() in invalid_values:
+        raise ValueError("❌ GOOGLE_API_KEY appears to be a placeholder value.")
+    if DEEPSEEK_API_KEY.lower().strip() in invalid_values:
+        raise ValueError("❌ DEEPSEEK_API_KEY appears to be a placeholder value.")
+
 class LLMsConfig:
     def __init__(self):
         self.llm_gemini = ChatGoogleGenerativeAI(model="gemini-2.5-flash-preview-04-17", google_api_key=GOOGLE_API_KEY, temperature=0.7)

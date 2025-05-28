@@ -5,5 +5,5 @@ langchain-core
 langchain-google-genai
 langchain-deepseek
 pandas
-mistralai==1.7.0
+mistralai
 

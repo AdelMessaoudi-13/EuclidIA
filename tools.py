@@ -8,7 +8,7 @@ llm_gemini, llm_deepseek = llms_config.get_llms()
 # --- Tools ---
 @tool
 def use_gemini(question: str) -> str:
-    """Uses Gemini for definitions, clear explanations of mathematical concepts, established properties, formulas, or any factual response.."""
+    """Uses Gemini for definitions, clear explanations of mathematical concepts, established properties, formulas, or any factual response."""
     if 'loading_placeholder' in st.session_state:
         st.session_state.loading_placeholder.markdown("📘 **Explaining...**")
 
@@ -26,7 +26,11 @@ Question: {question}
 """
         response = llm_gemini.invoke(prompt)
 
-        return response.content
+        # Safe access to response content
+        if hasattr(response, 'content') and response.content:
+            return response.content
+        else:
+            return "[ERROR] Gemini returned empty or invalid response."
     except Exception as e:
         st.error(f"Gemini failed: {e}")
         return f"[ERROR] Gemini failed: {e}"
@@ -54,7 +58,11 @@ Problem: {question}
 
         response = llm_deepseek.invoke(prompt)
 
-        return response.content
+        # Safe access to response content
+        if hasattr(response, 'content') and response.content:
+            return response.content
+        else:
+            return "[ERROR] DeepSeek returned empty or invalid response."
     except Exception as e:
         st.error(f"DeepSeek failed: {e}")
         return f"[ERROR] DeepSeek failed: {e}"

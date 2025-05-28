@@ -14,7 +14,13 @@ def clean_latex_with_gemini(text: str) -> str:
     if 'loading_placeholder' in st.session_state:
         st.session_state.loading_placeholder.markdown("✨ **Formatting ...**")
 
-    cleaning_prompt = f"""
+    try:
+        # Vérifier si le texte est trop long pour le nettoyage
+        if len(text) > 8000:  # Limite de sécurité
+            st.warning("Response too long for LaTeX cleaning, returning original.")
+            return text
+
+        cleaning_prompt = f"""
 Role:
 You are a post-processing assistant. You are given a math explanation that may contain LaTeX expressions that are not properly formatted.
 
@@ -30,19 +36,36 @@ Here is the original text:
 
 {text}
 """
-    response = llm_gemini.invoke(cleaning_prompt)
+        response = llm_gemini.invoke(cleaning_prompt)
 
-    if 'loading_placeholder' in st.session_state:
-        st.session_state.loading_placeholder.empty()
+        # Vérifier que la réponse n'est pas vide ou tronquée
+        if not response.content or len(response.content.strip()) < len(text) * 0.5:
+            st.warning("LaTeX cleaning may have truncated the response, returning original.")
+            return text
 
-    return response.content.strip()
+        return response.content.strip()
+
+    except Exception as e:
+        st.warning(f"LaTeX cleaning failed: {e}. Returning original text.")
+        return text
+    finally:
+        if 'loading_placeholder' in st.session_state:
+            st.session_state.loading_placeholder.empty()
 
 # --- Agent logic ---
 def prompt_ai(messages):
     """Handles tool call and returns the tool output directly (no synthesis)."""
     max_history = 15
     system_msgs = [msg for msg in messages if isinstance(msg, SystemMessage)]
-    recent_msgs = system_msgs + messages[-(max_history - len(system_msgs)):] if len(messages) > max_history else messages
+
+    # Logique de troncature corrigée
+    if len(messages) <= max_history:
+        recent_msgs = messages
+    else:
+        # Garder tous les messages système + les derniers messages non-système
+        non_system_msgs = [msg for msg in messages if not isinstance(msg, SystemMessage)]
+        max_non_system = max(1, max_history - len(system_msgs))  # Au moins 1 message non-système
+        recent_msgs = system_msgs + non_system_msgs[-max_non_system:]
 
     try:
         response = agent.invoke(recent_msgs)
@@ -86,8 +109,15 @@ def prompt_ai(messages):
         if tool_name == "use_deepseek":
             tool_output = clean_latex_with_gemini(tool_output)
 
-        if not tool_output or not isinstance(tool_output, str) or not tool_output.strip():
-            return AIMessage(content="❌ Tool returned an empty or invalid response.")
+        # Improved validation with better error messages
+        if tool_output is None:
+            return AIMessage(content="❌ Tool returned None.")
+
+        if not isinstance(tool_output, str):
+            return AIMessage(content=f"❌ Tool returned unexpected type: {type(tool_output)}. Content: {repr(tool_output)[:100]}")
+
+        if not tool_output.strip():
+            return AIMessage(content="❌ Tool returned empty string after stripping whitespace.")
 
         return AIMessage(content=tool_output)
 
